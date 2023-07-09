@@ -26,8 +26,10 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 			.service(
 				web::scope("/api/v1")
 					.service(v1::log::user_logs)
+					.service(v1::log::user_active_channels)
 					.service(v1::log::top_users)
-					.service(v1::log::user_active_channels),
+					.service(v1::log::top_users_channel)
+					.service(v1::log::top_channels),
 			)
 	})
 	.bind(("0.0.0.0", 4001))
