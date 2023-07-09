@@ -19,3 +19,10 @@ async fn user_logs(
 
 	Ok(HttpResponse::Ok().json(logs))
 }
+
+#[get("/top")]
+async fn top_users(data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
+	let top_users = Log::get_top_users(&data.db).await.unwrap();
+
+	Ok(HttpResponse::Ok().json(top_users))
+}

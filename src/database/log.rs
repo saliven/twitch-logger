@@ -66,4 +66,13 @@ impl Log {
 
 		Ok(logs)
 	}
+
+	pub async fn get_top_users(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
+		let top_users = 
+			sqlx::query_as::<_, (String, i64)>("SELECT username, COUNT(*) FROM logs GROUP BY username ORDER BY COUNT(*) DESC LIMIT 10")
+			.fetch_all(db)
+			.await?;
+
+		Ok(top_users)
+	}
 }
