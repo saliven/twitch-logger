@@ -1,4 +1,5 @@
 use actix_web::web;
+use tracing::info;
 use twitch_irc::{
 	login::StaticLoginCredentials,
 	message::{ClearChatAction, ServerMessage},
@@ -8,6 +9,8 @@ use twitch_irc::{
 use crate::{database::log::Log, global::GlobalState, utils};
 
 pub async fn start(data: web::Data<GlobalState>) {
+	info!("Starting listening to chat messages");
+
 	let channels = utils::load_channels();
 
 	let config = ClientConfig::default();

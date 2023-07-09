@@ -1,6 +1,6 @@
 use actix_web::web;
 use global::GlobalState;
-use tracing::Level;
+use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod api;
@@ -19,6 +19,9 @@ async fn main() {
 
 	let url = std::env::var("DATABASE_URL")
 		.unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/logging".to_string());
+
+	info!("Connecting to database at {}", url);
+
 	let db = sqlx::postgres::PgPool::connect(&url).await.unwrap();
 
 	sqlx::migrate!("./migrations").run(&db).await.unwrap();
