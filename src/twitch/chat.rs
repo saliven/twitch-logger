@@ -8,10 +8,10 @@ use twitch_irc::{
 
 use crate::{database::log::Log, global::GlobalState, utils};
 
-pub async fn start(data: web::Data<GlobalState>) {
+pub async fn start(global: web::Data<GlobalState>) {
 	info!("Starting listening to chat messages");
 
-	let channels = utils::load_channels();
+	let channels = utils::parse_file("./lists/channels.txt");
 
 	let config = ClientConfig::default();
 
@@ -22,25 +22,29 @@ pub async fn start(data: web::Data<GlobalState>) {
 		while let Some(message) = incoming_messages.recv().await {
 			match message {
 				ServerMessage::Privmsg(msg) => {
-					Log::create(
-						&data.db,
-						&msg.sender.login,
-						&msg.channel_login,
-						Some(&msg.message_text),
-						"chat",
-					)
-					.await
-					.unwrap();
+					if !global.ignored_users.contains(&msg.sender.login) {
+						Log::create(
+							&global.db,
+							&msg.sender.login,
+							&msg.channel_login,
+							Some(&msg.message_text),
+							"chat",
+						)
+						.await
+						.unwrap();
+					}
 				}
 				ServerMessage::ClearChat(msg) => {
-					if let ClearChatAction::UserBanned {
-						user_login,
-						user_id: _,
-					} = msg.action
-					{
-						Log::create(&data.db, &user_login, &msg.channel_login, None, "ban")
-							.await
-							.unwrap();
+					if !global.ignored_users.contains(&msg.channel_login) {
+						if let ClearChatAction::UserBanned {
+							user_login,
+							user_id: _,
+						} = msg.action
+						{
+							Log::create(&global.db, &user_login, &msg.channel_login, None, "ban")
+								.await
+								.unwrap();
+						}
 					}
 				}
 				_ => {}

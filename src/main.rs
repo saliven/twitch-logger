@@ -30,9 +30,9 @@ async fn main() {
 
 	sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-	let data = web::Data::new(GlobalState { db });
-	let data_http = web::Data::clone(&data);
+	let global = web::Data::new(GlobalState::new(db));
+	let global_http = web::Data::clone(&global);
 
-	tokio::spawn(twitch::chat::start(data));
-	api::start(data_http).await.unwrap();
+	tokio::spawn(twitch::chat::start(global));
+	api::start(global_http).await.unwrap();
 }

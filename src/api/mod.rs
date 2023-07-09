@@ -16,12 +16,12 @@ pub struct ApiPagination {
 	pub limit: Option<i64>,
 }
 
-pub async fn start(data: Data<GlobalState>) -> std::io::Result<()> {
+pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 	info!("Starting API server");
 
 	HttpServer::new(move || {
 		App::new()
-			.app_data(web::Data::clone(&data))
+			.app_data(web::Data::clone(&global_data))
 			.wrap(TracingLogger::default())
 			.service(
 				web::scope("/api/v1")
