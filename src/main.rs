@@ -11,8 +11,12 @@ mod utils;
 
 #[tokio::main]
 async fn main() {
+	let filter_level = std::env::var("RUST_LOG")
+		.map(|s| s.parse().unwrap_or(Level::DEBUG))
+		.unwrap_or(Level::DEBUG);
+
 	let subscriber = FmtSubscriber::builder()
-		.with_max_level(Level::DEBUG)
+		.with_max_level(filter_level)
 		.finish();
 
 	tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
