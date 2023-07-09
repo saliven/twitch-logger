@@ -40,6 +40,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/server ./server
 
-COPY ./channels.txt ./channels.txt
+COPY ./lists ./lists
 
 CMD ["./server"]
