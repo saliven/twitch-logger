@@ -19,7 +19,7 @@ pub async fn start(data: Data<GlobalState>) -> std::io::Result<()> {
 			.service(web::scope("/api/v1").service(v1::log::user_logs))
 		// .service()
 	})
-	.bind(("localhost", 4001))
+	.bind(("0.0.0.0", 4001))
 	.unwrap()
 	.run()
 	.await
