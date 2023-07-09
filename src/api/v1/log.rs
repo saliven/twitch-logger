@@ -20,6 +20,18 @@ async fn user_logs(
 	Ok(HttpResponse::Ok().json(logs))
 }
 
+#[get("/channels/{username}")]
+async fn user_active_channels(
+	data: web::Data<GlobalState>,
+	path: web::Path<String>,
+) -> Result<HttpResponse, Error> {
+	let username = path.into_inner();
+
+	let channels = Log::get_active_channels(&data.db, &username).await.unwrap();
+
+	Ok(HttpResponse::Ok().json(channels))
+}
+
 #[get("/top")]
 async fn top_users(data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
 	let top_users = Log::get_top_users(&data.db).await.unwrap();

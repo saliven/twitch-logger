@@ -75,4 +75,17 @@ impl Log {
 
 		Ok(top_users)
 	}
+
+	pub async fn get_active_channels(
+		db: &sqlx::PgPool,
+		username: &str,
+	) -> Result<Vec<(String, i64)>, sqlx::Error> {
+		let channels = 
+			sqlx::query_as::<_, (String, i64)>("SELECT channel, count(id) as count FROM logs WHERE username = $1 GROUP BY channel ORDER BY count DESC")
+			.bind(username)
+			.fetch_all(db)
+			.await?;
+
+		Ok(channels)
+	}
 }
