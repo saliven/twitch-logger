@@ -112,3 +112,13 @@ pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, s
 
 	Ok(channels)
 }
+
+pub async fn search_users(db: &sqlx::PgPool, query: String) -> Result<Vec<String>, sqlx::Error> {
+	let users = 
+		sqlx::query_as::<_, (String,)>("SELECT DISTINCT username FROM logs WHERE username ILIKE $1 LIMIT 10")
+		.bind(format!("%{}%", query))
+		.fetch_all(db)
+		.await?;
+
+	Ok(users.into_iter().map(|(username,)| username).collect())
+}

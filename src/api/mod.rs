@@ -41,6 +41,7 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 					.service(v1::index)
 					.service(v1::log::user_logs)
 					.service(v1::log::user_active_channels)
+					.service(v1::log::search_logs)
 					.service(v1::log::top_users)
 					.service(v1::log::top_users_channel)
 					.service(v1::log::top_channels)

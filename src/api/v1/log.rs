@@ -1,4 +1,5 @@
 use actix_web::{get, http::Error, web, HttpResponse};
+use serde::Deserialize;
 
 use crate::{
 	api::{ApiPaginationQuery, ApiPaginationResponse},
@@ -22,6 +23,23 @@ async fn user_logs(
 		.unwrap();
 
 	Ok(HttpResponse::Ok().json(ApiPaginationResponse { offset, data: logs }))
+}
+
+#[derive(Deserialize)]
+struct SearchQuery {
+	query: String,
+}
+
+#[get("/logs/search/users")]
+async fn search_logs(
+	global_data: web::Data<GlobalState>,
+	query: web::Query<SearchQuery>,
+) -> Result<HttpResponse, Error> {
+	let users = log::search_users(&global_data.db, query.query.clone())
+		.await
+		.unwrap();
+
+	Ok(HttpResponse::Ok().json(users))
 }
 
 #[get("/logs/{username}/active")]
