@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{
 	web::{self, Data},
 	App, HttpServer,
@@ -20,9 +21,15 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 	info!("Starting API server");
 
 	HttpServer::new(move || {
+		let cors = Cors::default()
+			.allow_any_header()
+			.allow_any_method()
+			.allow_any_origin();
+
 		App::new()
 			.app_data(web::Data::clone(&global_data))
 			.wrap(TracingLogger::default())
+			.wrap(cors)
 			.service(
 				web::scope("/api/v1")
 					.service(v1::log::user_logs)
