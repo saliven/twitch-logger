@@ -1,6 +1,10 @@
 use actix_web::{get, http::Error, web, HttpResponse};
 
-use crate::{api::ApiPagination, database::log::Log, global::GlobalState};
+use crate::{
+	api::ApiPagination,
+	database::log::{self, Log},
+	global::GlobalState,
+};
 
 #[get("/logs/{username}/channel/{channel}")]
 async fn user_logs(
@@ -27,7 +31,7 @@ async fn user_active_channels(
 ) -> Result<HttpResponse, Error> {
 	let username = path.into_inner();
 
-	let channels = Log::get_active_channels(&global_data.db, &username)
+	let channels = log::get_active_channels(&global_data.db, &username)
 		.await
 		.unwrap();
 
@@ -36,7 +40,7 @@ async fn user_active_channels(
 
 #[get("/logs/top/users")]
 async fn top_users(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let users = Log::get_top_users(&global_data.db).await.unwrap();
+	let users = log::get_top_users(&global_data.db).await.unwrap();
 
 	Ok(HttpResponse::Ok().json(users))
 }
@@ -48,7 +52,7 @@ async fn top_users_channel(
 ) -> Result<HttpResponse, Error> {
 	let channel = path.into_inner();
 
-	let users = Log::get_top_users_channel(&global_data.db, &channel)
+	let users = log::get_top_users_channel(&global_data.db, &channel)
 		.await
 		.unwrap();
 
@@ -57,7 +61,7 @@ async fn top_users_channel(
 
 #[get("/logs/top/channels")]
 async fn top_channels(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let channels = Log::get_top_channels(&global_data.db).await.unwrap();
+	let channels = log::get_top_channels(&global_data.db).await.unwrap();
 
 	Ok(HttpResponse::Ok().json(channels))
 }

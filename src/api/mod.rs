@@ -29,7 +29,8 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 					.service(v1::log::user_active_channels)
 					.service(v1::log::top_users)
 					.service(v1::log::top_users_channel)
-					.service(v1::log::top_channels),
+					.service(v1::log::top_channels)
+					.service(v1::stats::stats_size),
 			)
 	})
 	.bind(("0.0.0.0", 4001))

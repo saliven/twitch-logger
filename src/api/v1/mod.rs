@@ -1,6 +1,7 @@
 use actix_web::{get, http::Error, HttpResponse};
 
 pub mod log;
+pub mod stats;
 
 #[get("/")]
 async fn index() -> Result<HttpResponse, Error> {
