@@ -5,5 +5,5 @@ pub mod stats;
 
 #[get("/")]
 async fn index() -> Result<HttpResponse, Error> {
-	Ok(HttpResponse::Ok().body("API V1 Okayeg"))
+	Ok(HttpResponse::Ok().body("Okayeg"))
 }

@@ -1,7 +1,7 @@
 use actix_web::{get, http::Error, web, HttpResponse};
 
 use crate::{
-	api::ApiPagination,
+	api::{ApiPaginationQuery, ApiPaginationResponse},
 	database::log::{self, Log},
 	global::GlobalState,
 };
@@ -10,7 +10,7 @@ use crate::{
 async fn user_logs(
 	global_data: web::Data<GlobalState>,
 	path: web::Path<(String, String)>,
-	query: web::Query<ApiPagination>,
+	query: web::Query<ApiPaginationQuery>,
 ) -> Result<HttpResponse, Error> {
 	let (username, channel) = path.into_inner();
 
@@ -21,7 +21,7 @@ async fn user_logs(
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(logs))
+	Ok(HttpResponse::Ok().json(ApiPaginationResponse { offset, data: logs }))
 }
 
 #[get("/logs/{username}/active")]
