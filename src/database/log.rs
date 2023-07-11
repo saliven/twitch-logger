@@ -101,4 +101,13 @@ impl Log {
 
 		Ok(top_users)
 	}
+
+	pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
+		let channels = 
+			sqlx::query_as::<_, (String, i64)>("SELECT channel, count(id) as count FROM logs GROUP BY channel ORDER BY count DESC")
+			.fetch_all(db)
+			.await?;
+
+		Ok(channels)
+	}
 }

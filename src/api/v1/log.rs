@@ -56,6 +56,8 @@ async fn top_users_channel(
 }
 
 #[get("/logs/top/channels")]
-async fn top_channels() -> Result<HttpResponse, Error> {
-	todo!()
+async fn top_channels(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
+	let channels = Log::get_top_channels(&global_data.db).await.unwrap();
+
+	Ok(HttpResponse::Ok().json(channels))
 }
