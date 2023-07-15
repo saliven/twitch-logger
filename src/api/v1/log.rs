@@ -7,7 +7,7 @@ use crate::{
 	global::GlobalState,
 };
 
-#[get("/logs/{username}/channel/{channel}")]
+#[get("/logs/user/{username}/channel/{channel}")]
 async fn user_logs(
 	global_data: web::Data<GlobalState>,
 	path: web::Path<(String, String)>,
@@ -19,6 +19,31 @@ async fn user_logs(
 	let limit = query.limit.unwrap_or(100);
 
 	let logs = Log::get_by_username(&global_data.db, &username, &channel, limit, offset)
+		.await
+		.unwrap();
+
+	Ok(HttpResponse::Ok().json(ApiPaginationResponse { offset, data: logs }))
+}
+
+#[derive(Deserialize)]
+struct ChannelLogsQuery {
+	message_id: String,
+	offset: Option<i64>,
+	limit: Option<i64>,
+}
+
+#[get("/logs/channel/{channel}")]
+async fn channel_log(
+	global_data: web::Data<GlobalState>,
+	path: web::Path<String>,
+	query: web::Query<ChannelLogsQuery>,
+) -> Result<HttpResponse, Error> {
+	let channel = path.into_inner();
+
+	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(100);
+
+	let logs = Log::get_by_channel(&global_data.db, &query.message_id, &channel, limit, offset)
 		.await
 		.unwrap();
 
@@ -42,7 +67,7 @@ async fn search_logs(
 	Ok(HttpResponse::Ok().json(users))
 }
 
-#[get("/logs/{username}/active")]
+#[get("/logs/user/{username}/active")]
 async fn user_active_channels(
 	global_data: web::Data<GlobalState>,
 	path: web::Path<String>,
@@ -63,7 +88,7 @@ async fn top_users(global_data: web::Data<GlobalState>) -> Result<HttpResponse, 
 	Ok(HttpResponse::Ok().json(users))
 }
 
-#[get("/logs/top/users/{channel}")]
+#[get("/logs/top/users/channel/{channel}")]
 async fn top_users_channel(
 	global_data: web::Data<GlobalState>,
 	path: web::Path<String>,

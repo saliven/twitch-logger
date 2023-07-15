@@ -22,7 +22,7 @@ pub async fn start(global: web::Data<GlobalState>) {
 		while let Some(message) = incoming_messages.recv().await {
 			match message {
 				ServerMessage::Privmsg(msg) => {
-					if !global.ignored_users.contains(&msg.sender.login) {
+					if !global.ignored_users.contains(&msg.sender.login) && msg.message_text.len() > 1 {
 						Log::create(
 							&global.db,
 							&msg.sender.login,

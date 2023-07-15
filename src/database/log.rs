@@ -67,6 +67,27 @@ impl Log {
 		Ok(logs)
 	}
 
+	pub async fn get_by_channel(
+		db: &sqlx::PgPool,
+		id: &str,
+		channel: &str,
+		limit: i64,
+		offset: i64,
+	) -> Result<Vec<Self>, sqlx::Error> {
+		let uuid = uuid::Uuid::parse_str(id).unwrap();
+
+		let logs = 
+			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at FROM logs WHERE created_at <= (SELECT created_at FROM logs WHERE id = $1) AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
+			.bind(uuid)
+			.bind(channel)
+			.bind(limit)
+			.bind(offset)
+			.fetch_all(db)
+			.await?;
+
+		Ok(logs)
+	}
+
 }
 
 pub async fn get_top_users(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
