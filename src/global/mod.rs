@@ -11,13 +11,20 @@ pub struct GlobalState {
 
 impl GlobalState {
 	pub fn new(db: sqlx::PgPool) -> Self {
-		let channels = utils::parse_file("./lists/channels.txt");
-		let ignored_users = utils::parse_file("./lists/ignored_users.txt");
+		let bots = utils::parse_file("./lists/bots.txt");
+
+		let channels = utils::parse_env_list("TWITCH_CHANNELS");
+		let ignored_usernames = utils::parse_env_list("TWITCH_IGNORED_USERS");
+
+		let ignored_users = ignored_usernames
+			.into_iter()
+			.chain(bots.into_iter())
+			.collect::<HashSet<String>>();
 
 		Self {
 			db,
 			channels,
-			ignored_users: ignored_users.into_iter().collect(),
+			ignored_users,
 		}
 	}
 }

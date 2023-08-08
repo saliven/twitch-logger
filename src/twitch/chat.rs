@@ -6,12 +6,12 @@ use twitch_irc::{
 	ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
-use crate::{database::log::Log, global::GlobalState, utils};
+use crate::{database::log::Log, global::GlobalState};
 
 pub async fn start(global: web::Data<GlobalState>) {
 	info!("Starting listening to chat messages");
 
-	let channels = utils::parse_file("./lists/channels.txt");
+	let channels = global.channels.clone();
 
 	let config = ClientConfig::default();
 
@@ -19,6 +19,8 @@ pub async fn start(global: web::Data<GlobalState>) {
 		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
 
 	let join_handle = tokio::spawn(async move {
+		let global = global.clone();
+
 		while let Some(message) = incoming_messages.recv().await {
 			match message {
 				ServerMessage::Privmsg(msg) => {

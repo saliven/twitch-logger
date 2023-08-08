@@ -2,4 +2,3 @@ streamelements
 fossabot
 supibot
 nightbot
-saliven
