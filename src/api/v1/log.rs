@@ -60,7 +60,7 @@ async fn search_logs(
 	global_data: web::Data<GlobalState>,
 	query: web::Query<SearchQuery>,
 ) -> Result<HttpResponse, Error> {
-	let users = log::search_users(&global_data.db, query.query.clone())
+	let users = log::search_users(&global_data.db, query.query.as_str())
 		.await
 		.unwrap();
 

@@ -1,3 +1,4 @@
+use cached::proc_macro::cached;
 use chrono::{serde::ts_seconds_option, DateTime, Utc};
 use serde::Serialize;
 #[allow(unused_imports)]
@@ -90,6 +91,13 @@ impl Log {
 
 }
 
+#[cached(
+	time = 600,
+	time_refresh = true,
+	result = true,
+	key = "bool",
+	convert = r#"{ true }"#
+)]
 pub async fn get_top_users(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
 	let top_users = 
 		sqlx::query_as::<_, (String, i64)>("SELECT username, COUNT(*) FROM logs GROUP BY username ORDER BY COUNT(*) DESC LIMIT 10")
@@ -112,6 +120,13 @@ pub async fn get_active_channels(
 	Ok(channels)
 }
 
+#[cached(
+	time = 600,
+	time_refresh = true,
+	result = true,
+	key = "bool",
+	convert = r#"{ true }"#
+)]
 pub async fn get_top_users_channel(
 	db: &sqlx::PgPool,
 	channel: &str,
@@ -125,6 +140,13 @@ pub async fn get_top_users_channel(
 	Ok(top_users)
 }
 
+#[cached(
+	time = 600,
+	time_refresh = true,
+	result = true,
+	key = "bool",
+	convert = r#"{ true }"#
+)]
 pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
 	let channels = 
 		sqlx::query_as::<_, (String, i64)>("SELECT channel, count(id) as count FROM logs GROUP BY channel ORDER BY count DESC")
@@ -134,7 +156,13 @@ pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, s
 	Ok(channels)
 }
 
-pub async fn search_users(db: &sqlx::PgPool, query: String) -> Result<Vec<String>, sqlx::Error> {
+#[cached(
+	time = 60,
+	result = true,
+	key = "String",
+	convert = r#"{ String::from(query) }"#
+)]
+pub async fn search_users(db: &sqlx::PgPool, query: &str) -> Result<Vec<String>, sqlx::Error> {
 	let users = 
 		sqlx::query_as::<_, (String,)>("SELECT DISTINCT username FROM logs WHERE username ILIKE $1 LIMIT 10")
 		.bind(format!("%{}%", query))
