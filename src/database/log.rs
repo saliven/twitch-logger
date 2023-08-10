@@ -122,10 +122,9 @@ pub async fn get_active_channels(
 
 #[cached(
 	time = 600,
-	time_refresh = true,
 	result = true,
-	key = "bool",
-	convert = r#"{ true }"#
+	key = "String",
+	convert = r#"{ String::from(channel) }"#
 )]
 pub async fn get_top_users_channel(
 	db: &sqlx::PgPool,
