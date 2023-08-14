@@ -56,7 +56,7 @@ impl Log {
 		limit: i64,
 		offset: i64,
 	) -> Result<Vec<Self>, sqlx::Error> {
-		let logs = 
+		let logs =
 			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at FROM logs WHERE username = $1 AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
 			.bind(username)
 			.bind(channel)
@@ -77,7 +77,7 @@ impl Log {
 	) -> Result<Vec<Self>, sqlx::Error> {
 		let uuid = uuid::Uuid::parse_str(id).unwrap();
 
-		let logs = 
+		let logs =
 			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at FROM logs WHERE created_at <= (SELECT created_at FROM logs WHERE id = $1) AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
 			.bind(uuid)
 			.bind(channel)
@@ -88,7 +88,6 @@ impl Log {
 
 		Ok(logs)
 	}
-
 }
 
 #[cached(
@@ -99,10 +98,11 @@ impl Log {
 	convert = r#"{ true }"#
 )]
 pub async fn get_top_users(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
-	let top_users = 
-		sqlx::query_as::<_, (String, i64)>("SELECT username, COUNT(*) FROM logs GROUP BY username ORDER BY COUNT(*) DESC LIMIT 10")
-		.fetch_all(db)
-		.await?;
+	let top_users = sqlx::query_as::<_, (String, i64)>(
+		"SELECT username, COUNT(*) FROM logs GROUP BY username ORDER BY COUNT(*) DESC LIMIT 10",
+	)
+	.fetch_all(db)
+	.await?;
 
 	Ok(top_users)
 }
@@ -111,7 +111,7 @@ pub async fn get_active_channels(
 	db: &sqlx::PgPool,
 	username: &str,
 ) -> Result<Vec<(String, i64)>, sqlx::Error> {
-	let channels = 
+	let channels =
 		sqlx::query_as::<_, (String, i64)>("SELECT channel, count(id) as count FROM logs WHERE username = $1 GROUP BY channel ORDER BY count DESC")
 		.bind(username)
 		.fetch_all(db)
@@ -130,7 +130,7 @@ pub async fn get_top_users_channel(
 	db: &sqlx::PgPool,
 	channel: &str,
 ) -> Result<Vec<(String, i64)>, sqlx::Error> {
-	let top_users = 
+	let top_users =
 		sqlx::query_as::<_, (String, i64)>("SELECT username, COUNT(*) FROM logs WHERE channel = $1 GROUP BY username ORDER BY COUNT(*) DESC LIMIT 10")
 		.bind(channel)
 		.fetch_all(db)
@@ -147,10 +147,11 @@ pub async fn get_top_users_channel(
 	convert = r#"{ true }"#
 )]
 pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, sqlx::Error> {
-	let channels = 
-		sqlx::query_as::<_, (String, i64)>("SELECT channel, count(id) as count FROM logs GROUP BY channel ORDER BY count DESC")
-		.fetch_all(db)
-		.await?;
+	let channels = sqlx::query_as::<_, (String, i64)>(
+		"SELECT channel, count(id) as count FROM logs GROUP BY channel ORDER BY count DESC",
+	)
+	.fetch_all(db)
+	.await?;
 
 	Ok(channels)
 }
@@ -162,11 +163,12 @@ pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, s
 	convert = r#"{ String::from(query) }"#
 )]
 pub async fn search_users(db: &sqlx::PgPool, query: &str) -> Result<Vec<String>, sqlx::Error> {
-	let users = 
-		sqlx::query_as::<_, (String,)>("SELECT DISTINCT username FROM logs WHERE username ILIKE $1 LIMIT 10")
-		.bind(format!("%{}%", query))
-		.fetch_all(db)
-		.await?;
+	let users = sqlx::query_as::<_, (String,)>(
+		"SELECT DISTINCT username FROM logs WHERE username ILIKE $1 LIMIT 10",
+	)
+	.bind(format!("%{}%", query))
+	.fetch_all(db)
+	.await?;
 
 	Ok(users.into_iter().map(|(username,)| username).collect())
 }
