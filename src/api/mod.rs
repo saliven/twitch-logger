@@ -23,8 +23,12 @@ pub struct ApiPaginationResponse<T> {
 	pub data: T,
 }
 
-pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
-	info!("Starting API server");
+pub async fn start(global: web::Data<GlobalState>) -> std::io::Result<()> {
+	let port = std::env::var("PORT")
+		.map(|s| s.parse().unwrap_or(4001))
+		.unwrap_or(4001);
+
+	info!("Starting API server on port {}", port);
 
 	HttpServer::new(move || {
 		let cors = Cors::default()
@@ -33,7 +37,7 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 			.allow_any_origin();
 
 		App::new()
-			.app_data(web::Data::clone(&global_data))
+			.app_data(Data::clone(&global))
 			.wrap(TracingLogger::default())
 			.wrap(cors)
 			.service(
@@ -49,7 +53,7 @@ pub async fn start(global_data: Data<GlobalState>) -> std::io::Result<()> {
 					.service(v1::stats::stats_size),
 			)
 	})
-	.bind(("0.0.0.0", 4001))
+	.bind(("0.0.0.0", port))
 	.unwrap()
 	.run()
 	.await
