@@ -1,5 +1,7 @@
 use actix_web::web;
-use tracing::info;
+use chrono::Utc;
+use tokio::{sync::Mutex, time::Instant};
+use tracing::{debug, error, info};
 use twitch_irc::{
 	login::StaticLoginCredentials,
 	message::{ClearChatAction, ServerMessage},
@@ -8,8 +10,14 @@ use twitch_irc::{
 
 use crate::{database::log::Log, global::GlobalState};
 
+static THRESHOLD: usize = 200;
+static TIME_THRESHOLD: u64 = 20;
+
 pub async fn start(global: web::Data<GlobalState>) {
 	info!("Starting listening to chat messages");
+
+	let logs = Mutex::new(Vec::new());
+	let mut last_flush = Instant::now();
 
 	let channels = global.channels.clone();
 
@@ -22,18 +30,19 @@ pub async fn start(global: web::Data<GlobalState>) {
 		let global = global.clone();
 
 		while let Some(message) = incoming_messages.recv().await {
+			let mut logs_vec = logs.lock().await;
+
 			match message {
 				ServerMessage::Privmsg(msg) => {
 					if !global.ignored_users.contains(&msg.sender.login) && msg.message_text.len() > 1 {
-						Log::create(
-							&global.db,
-							&msg.sender.login,
-							&msg.channel_login,
-							Some(&msg.message_text),
-							"chat",
-						)
-						.await
-						.unwrap();
+						logs_vec.push(Log {
+							id: uuid::Uuid::new_v4(),
+							username: msg.sender.login,
+							channel: msg.channel_login,
+							content: Some(msg.message_text),
+							log_type: "chat".into(),
+							created_at: Some(Utc::now()),
+						});
 					}
 				}
 				ServerMessage::ClearChat(msg) => {
@@ -41,15 +50,40 @@ pub async fn start(global: web::Data<GlobalState>) {
 						if let ClearChatAction::UserBanned {
 							user_login,
 							user_id: _,
+						}
+						| ClearChatAction::UserTimedOut {
+							user_login,
+							user_id: _,
+							timeout_length: _,
 						} = msg.action
 						{
-							Log::create(&global.db, &user_login, &msg.channel_login, None, "ban")
-								.await
-								.unwrap();
+							logs_vec.push(Log {
+								id: uuid::Uuid::new_v4(),
+								username: user_login,
+								channel: msg.channel_login,
+								content: None,
+								log_type: "ban".into(),
+								created_at: Some(Utc::now()),
+							});
 						}
 					}
 				}
 				_ => {}
+			}
+
+			if logs_vec.len() >= THRESHOLD || last_flush.elapsed().as_secs() >= TIME_THRESHOLD {
+				let len = logs_vec.len();
+
+				match Log::bulk_insert(&global.db, logs_vec.clone()).await {
+					Ok(_) => {}
+					Err(e) => {
+						error!("Error while inserting logs into database: {:?}", e);
+					}
+				}
+
+				logs_vec.clear();
+				last_flush = Instant::now();
+				debug!("Flushing logs to database {:?}", len);
 			}
 		}
 	});

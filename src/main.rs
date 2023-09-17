@@ -1,4 +1,5 @@
 use actix_web::web;
+use anyhow::Result;
 use global::GlobalState;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -10,7 +11,7 @@ mod twitch;
 mod utils;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
 	let env = std::env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
 	let fallback_log_level = match env.as_str() {
@@ -31,9 +32,8 @@ async fn main() {
 
 	info!("Starting up");
 
-	info!("Loading environment variables");
-
 	if env == "development" {
+		info!("Loading environment variables");
 		dotenv::dotenv().ok();
 	}
 
@@ -50,8 +50,8 @@ async fn main() {
 	let global = web::Data::new(GlobalState::new(db));
 	let global_http = web::Data::clone(&global);
 
-	info!("Starting main processes");
-
 	tokio::spawn(twitch::chat::start(global));
 	api::start(global_http).await.unwrap();
+
+	Ok(())
 }

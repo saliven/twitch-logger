@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  timescale:
+    image: timescale/timescaledb:latest-pg15
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+
+volumes:
+  timescale-data:
