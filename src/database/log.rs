@@ -3,6 +3,7 @@ use chrono::{serde::ts_seconds_option, DateTime, Utc};
 use serde::Serialize;
 #[allow(unused_imports)]
 use sqlx::{prelude::*, FromRow};
+use sqlx::{Postgres, QueryBuilder};
 extern crate serde_json;
 
 #[derive(Debug, Clone, Default, sqlx::FromRow, Serialize)]
@@ -17,36 +18,23 @@ pub struct Log {
 }
 
 impl Log {
-	pub async fn create(
-		db: &sqlx::PgPool,
-		username: &str,
-		channel: &str,
-		content: Option<&str>,
-		log_type: &str,
-	) -> Result<Self, sqlx::Error> {
-		let id = uuid::Uuid::new_v4();
-		let created_at = chrono::Utc::now();
+	pub async fn bulk_insert(db: &sqlx::PgPool, logs: Vec<Self>) -> Result<(), sqlx::Error> {
+		let mut query_builder: QueryBuilder<Postgres> =
+			QueryBuilder::new("INSERT INTO logs(id, username, content, log_type, channel) ");
 
-		sqlx::query(
-			"INSERT INTO logs (id, username, content, log_type, created_at, channel) VALUES ($1, $2, $3, $4, $5, $6)",
-		)
-		.bind(&id)
-		.bind(username)
-		.bind(content)
-		.bind(log_type)
-		.bind(&created_at)
-		.bind(channel)
-		.execute(db)
-		.await?;
+		query_builder.push_values(logs, |mut b, log| {
+			b.push_bind(log.id)
+				.push_bind(log.username)
+				.push_bind(log.content)
+				.push_bind(log.log_type)
+				.push_bind(log.channel);
+		});
 
-		Ok(Self {
-			id,
-			username: username.to_string(),
-			channel: channel.to_string(),
-			content: content.map(|s| s.to_string()),
-			log_type: log_type.to_string(),
-			created_at: Some(created_at),
-		})
+		let query = query_builder.build();
+
+		query.execute(db).await?;
+
+		Ok(())
 	}
 
 	pub async fn get_by_username(
