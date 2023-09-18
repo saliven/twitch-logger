@@ -50,7 +50,8 @@ pub async fn start(global: web::Data<GlobalState>) -> std::io::Result<()> {
 					.service(v1::log::top_users)
 					.service(v1::log::top_users_channel)
 					.service(v1::log::top_channels)
-					.service(v1::stats::stats_size),
+					.service(v1::stats::stats_size)
+					.service(v1::chart::rate_chart),
 			)
 	})
 	.bind(("0.0.0.0", port))

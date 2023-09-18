@@ -1,5 +1,6 @@
 use actix_web::{get, http::Error, HttpResponse};
 
+pub mod chart;
 pub mod log;
 pub mod stats;
 
