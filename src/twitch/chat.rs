@@ -74,6 +74,10 @@ pub async fn start(global: web::Data<GlobalState>) {
 			if logs_vec.len() >= THRESHOLD || last_flush.elapsed().as_secs() >= TIME_THRESHOLD {
 				let len = logs_vec.len();
 
+				if len == 0 {
+					continue;
+				}
+
 				match Log::bulk_insert(&global.db, logs_vec.clone()).await {
 					Ok(_) => {}
 					Err(e) => {
