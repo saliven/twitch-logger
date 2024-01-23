@@ -8,7 +8,7 @@ pub struct Stats {
 }
 
 #[cached(
-	time = 600,
+	time = 3600,
 	time_refresh = true,
 	result = true,
 	key = "bool",
