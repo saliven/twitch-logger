@@ -38,8 +38,8 @@ mod tests {
 
 	#[test]
 	fn test_parse_env_list() {
-		env::set_var("TEST_ENV", "test1,test2,test3");
+		env::set_var("TEST_ENV", "#test1,test2,test3");
 		let channels = parse_env_list("TEST_ENV");
-		assert_eq!(channels, vec!["test1", "test2", "test3"]);
+		assert_eq!(channels, vec!["#test1", "test2", "test3"]);
 	}
 }
