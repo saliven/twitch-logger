@@ -3,6 +3,9 @@ use std::io::Error;
 use anyhow::Result;
 use axum::{routing::get, Router};
 use serde::{Deserialize, Serialize};
+use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
+
 use tracing::info;
 
 use crate::{api::v1::index, global::GlobalState};
@@ -48,6 +51,7 @@ pub async fn start(global: GlobalState) -> Result<(), Error> {
 	let app = Router::new()
 		.nest("/api/v1", v1_routes)
 		.route("/", get(index))
+		.layer(ServiceBuilder::new().layer(CorsLayer::new().allow_origin(Any)))
 		.with_state(global);
 
 	let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
