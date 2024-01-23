@@ -1,29 +1,53 @@
 use cached::proc_macro::cached;
 use chrono::{serde::ts_seconds_option, DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 #[allow(unused_imports)]
 use sqlx::{prelude::*, FromRow};
 use sqlx::{Postgres, QueryBuilder};
 extern crate serde_json;
 
-#[derive(Debug, Clone, Default, sqlx::FromRow, Serialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize, Default)]
+#[sqlx(type_name = "log_type", rename_all = "lowercase")]
+pub enum LogType {
+	#[default]
+	Chat,
+	Ban,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow, Serialize)]
 pub struct Log {
 	pub id: uuid::Uuid,
+	pub user_id: String,
 	pub username: String,
 	pub channel: String,
 	pub content: Option<String>,
-	pub log_type: String,
+	pub log_type: LogType,
 	#[serde(with = "ts_seconds_option")]
 	pub created_at: Option<DateTime<Utc>>,
+}
+
+impl Default for Log {
+	fn default() -> Self {
+		Self {
+			id: uuid::Uuid::new_v4(),
+			user_id: String::new(),
+			username: String::new(),
+			channel: String::new(),
+			content: None,
+			log_type: LogType::Chat,
+			created_at: Some(Utc::now()),
+		}
+	}
 }
 
 impl Log {
 	pub async fn bulk_insert(db: &sqlx::PgPool, logs: Vec<Self>) -> Result<(), sqlx::Error> {
 		let mut query_builder: QueryBuilder<Postgres> =
-			QueryBuilder::new("INSERT INTO logs(id, username, content, log_type, channel) ");
+			QueryBuilder::new("INSERT INTO logs(id, user_id, username, content, log_type, channel) ");
 
 		query_builder.push_values(logs, |mut b, log| {
 			b.push_bind(log.id)
+				.push_bind(log.user_id)
 				.push_bind(log.username)
 				.push_bind(log.content)
 				.push_bind(log.log_type)
@@ -79,7 +103,7 @@ impl Log {
 }
 
 #[cached(
-	time = 600,
+	time = 3600,
 	time_refresh = true,
 	result = true,
 	key = "bool",
@@ -109,7 +133,7 @@ pub async fn get_active_channels(
 }
 
 #[cached(
-	time = 600,
+	time = 3600,
 	result = true,
 	key = "String",
 	convert = r#"{ String::from(channel) }"#
@@ -128,7 +152,7 @@ pub async fn get_top_users_channel(
 }
 
 #[cached(
-	time = 600,
+	time = 3600,
 	time_refresh = true,
 	result = true,
 	key = "bool",
@@ -145,7 +169,7 @@ pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, s
 }
 
 #[cached(
-	time = 60,
+	time = 3600,
 	result = true,
 	key = "String",
 	convert = r#"{ String::from(query) }"#
