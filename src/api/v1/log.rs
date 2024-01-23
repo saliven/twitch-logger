@@ -19,9 +19,15 @@ pub async fn user_logs(
 	let offset = query.offset.unwrap_or(0);
 	let limit = query.limit.unwrap_or(100);
 
-	let logs = Log::get_by_username(&state.db, &username, &channel, limit, offset)
-		.await
-		.unwrap();
+	let logs = Log::get_by_username(
+		&state.db,
+		&username.to_lowercase(),
+		&channel.to_lowercase(),
+		limit,
+		offset,
+	)
+	.await
+	.unwrap();
 
 	(
 		StatusCode::OK,
@@ -44,9 +50,15 @@ pub async fn channel_log(
 	let offset = query.offset.unwrap_or(0);
 	let limit = query.limit.unwrap_or(100);
 
-	let logs = Log::get_by_channel(&state.db, &query.message_id, &channel, limit, offset)
-		.await
-		.unwrap();
+	let logs = Log::get_by_channel(
+		&state.db,
+		&query.message_id,
+		&channel.to_lowercase(),
+		limit,
+		offset,
+	)
+	.await
+	.unwrap();
 
 	(
 		StatusCode::OK,
@@ -74,7 +86,7 @@ pub async fn user_active_channels(
 	State(state): State<GlobalState>,
 	Path(username): Path<String>,
 ) -> (StatusCode, Json<Vec<(String, i64)>>) {
-	let channels = log::get_active_channels(&state.db, &username)
+	let channels = log::get_active_channels(&state.db, &username.to_lowercase())
 		.await
 		.unwrap();
 
@@ -91,7 +103,7 @@ pub async fn top_users_channel(
 	State(state): State<GlobalState>,
 	Path(channel): Path<String>,
 ) -> (StatusCode, Json<Vec<(String, i64)>>) {
-	let users = log::get_top_users_channel(&state.db, &channel)
+	let users = log::get_top_users_channel(&state.db, &channel.to_lowercase())
 		.await
 		.unwrap();
 

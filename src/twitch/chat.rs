@@ -35,27 +35,27 @@ pub async fn start(global: GlobalState) -> Result<()> {
 
 		match msg.as_typed()? {
 			Message::Privmsg(msg) => logs_vec.push(Log {
-				channel: msg.channel().get(1..).unwrap().to_string(),
+				channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
 				content: Some(msg.text().to_string()),
 				user_id: Some(msg.sender().id().to_string()),
-				username: msg.sender().name().to_string(),
+				username: msg.sender().name().to_string().to_lowercase(),
 				..Default::default()
 			}),
 			Message::ClearChat(msg) if msg.action().is_ban() || msg.action().is_time_out() => {
 				match msg.action() {
 					Action::Ban(ban) => logs_vec.push(Log {
-						channel: msg.channel().get(1..).unwrap().to_string(),
+						channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
 						content: None,
 						user_id: Some(ban.id().to_string()),
-						username: ban.user().to_string(),
+						username: ban.user().to_string().to_lowercase(),
 						log_type: LogType::Ban,
 						..Default::default()
 					}),
 					Action::TimeOut(timeout) => logs_vec.push(Log {
-						channel: msg.channel().get(1..).unwrap().to_string(),
+						channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
 						content: None,
 						user_id: Some(timeout.id().to_string()),
-						username: timeout.user().to_string(),
+						username: timeout.user().to_string().to_lowercase(),
 						log_type: LogType::Ban,
 						..Default::default()
 					}),
