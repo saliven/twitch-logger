@@ -37,7 +37,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 			Message::Privmsg(msg) => logs_vec.push(Log {
 				channel: msg.channel().get(1..).unwrap().to_string(),
 				content: Some(msg.text().to_string()),
-				user_id: msg.sender().id().to_string(),
+				user_id: Some(msg.sender().id().to_string()),
 				username: msg.sender().name().to_string(),
 				..Default::default()
 			}),
@@ -46,7 +46,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 					Action::Ban(ban) => logs_vec.push(Log {
 						channel: msg.channel().get(1..).unwrap().to_string(),
 						content: None,
-						user_id: ban.id().to_string(),
+						user_id: Some(ban.id().to_string()),
 						username: ban.user().to_string(),
 						log_type: LogType::Ban,
 						..Default::default()
@@ -54,7 +54,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 					Action::TimeOut(timeout) => logs_vec.push(Log {
 						channel: msg.channel().get(1..).unwrap().to_string(),
 						content: None,
-						user_id: timeout.id().to_string(),
+						user_id: Some(timeout.id().to_string()),
 						username: timeout.user().to_string(),
 						log_type: LogType::Ban,
 						..Default::default()
