@@ -1,100 +1,92 @@
-use actix_web::web;
-use chrono::Utc;
+use anyhow::Result;
+use tmi::{Action, Channel, Client, Credentials, Message};
 use tokio::{sync::Mutex, time::Instant};
 use tracing::{debug, error, info};
-use twitch_irc::{
-	login::StaticLoginCredentials,
-	message::{ClearChatAction, ServerMessage},
-	ClientConfig, SecureTCPTransport, TwitchIRCClient,
-};
 
-use crate::{database::log::Log, global::GlobalState};
+use crate::{
+	database::log::{Log, LogType},
+	global::GlobalState,
+};
 
 static THRESHOLD: usize = 200;
 static TIME_THRESHOLD: u64 = 20;
 
-pub async fn start(global: web::Data<GlobalState>) {
+pub async fn start(global: GlobalState) -> Result<()> {
 	info!("Starting listening to chat messages");
 
-	let logs = Mutex::new(Vec::new());
+	let logs: Mutex<Vec<Log>> = Mutex::new(Vec::new());
 	let mut last_flush = Instant::now();
 
-	let channels = global.channels.clone();
+	let channels = global
+		.channels
+		.clone()
+		.into_iter()
+		.map(Channel::parse)
+		.collect::<Result<Vec<_>, _>>()?;
 
-	let config = ClientConfig::default();
+	let credentials = Credentials::anon();
 
-	let (mut incoming_messages, client) =
-		TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
+	let mut client = Client::builder().credentials(credentials).connect().await?;
+	client.join_all(&channels).await?;
 
-	let join_handle = tokio::spawn(async move {
-		let global = global.clone();
+	loop {
+		let msg = client.recv().await?;
+		let mut logs_vec = logs.lock().await;
 
-		while let Some(message) = incoming_messages.recv().await {
-			let mut logs_vec = logs.lock().await;
-
-			match message {
-				ServerMessage::Privmsg(msg) => {
-					if !global.ignored_users.contains(&msg.sender.login) && msg.message_text.len() > 1 {
-						logs_vec.push(Log {
-							id: uuid::Uuid::new_v4(),
-							username: msg.sender.login,
-							channel: msg.channel_login,
-							content: Some(msg.message_text),
-							log_type: "chat".into(),
-							created_at: Some(Utc::now()),
-						});
-					}
+		match msg.as_typed()? {
+			Message::Privmsg(msg) => logs_vec.push(Log {
+				channel: msg.channel().get(1..).unwrap().to_string(),
+				content: Some(msg.text().to_string()),
+				user_id: msg.sender().id().to_string(),
+				username: msg.sender().name().to_string(),
+				..Default::default()
+			}),
+			Message::ClearChat(msg) if msg.action().is_ban() || msg.action().is_time_out() => {
+				match msg.action() {
+					Action::Ban(ban) => logs_vec.push(Log {
+						channel: msg.channel().get(1..).unwrap().to_string(),
+						content: None,
+						user_id: ban.id().to_string(),
+						username: ban.user().to_string(),
+						log_type: LogType::Ban,
+						..Default::default()
+					}),
+					Action::TimeOut(timeout) => logs_vec.push(Log {
+						channel: msg.channel().get(1..).unwrap().to_string(),
+						content: None,
+						user_id: timeout.id().to_string(),
+						username: timeout.user().to_string(),
+						log_type: LogType::Ban,
+						..Default::default()
+					}),
+					_ => {}
 				}
-				ServerMessage::ClearChat(msg) => {
-					if !global.ignored_users.contains(&msg.channel_login) {
-						if let ClearChatAction::UserBanned {
-							user_login,
-							user_id: _,
-						}
-						| ClearChatAction::UserTimedOut {
-							user_login,
-							user_id: _,
-							timeout_length: _,
-						} = msg.action
-						{
-							logs_vec.push(Log {
-								id: uuid::Uuid::new_v4(),
-								username: user_login,
-								channel: msg.channel_login,
-								content: None,
-								log_type: "ban".into(),
-								created_at: Some(Utc::now()),
-							});
-						}
-					}
-				}
-				_ => {}
 			}
-
-			if logs_vec.len() >= THRESHOLD || last_flush.elapsed().as_secs() >= TIME_THRESHOLD {
-				let len = logs_vec.len();
-
-				if len == 0 {
-					continue;
-				}
-
-				match Log::bulk_insert(&global.db, logs_vec.clone()).await {
-					Ok(_) => {}
-					Err(e) => {
-						error!("Error while inserting logs into database: {:?}", e);
-					}
-				}
-
-				logs_vec.clear();
-				last_flush = Instant::now();
-				debug!("Flushing logs to database {:?}", len);
+			Message::Reconnect => {
+				client.reconnect().await?;
+				client.join_all(&channels).await?;
 			}
+			Message::Ping(ping) => client.pong(&ping).await?,
+			_ => {}
 		}
-	});
 
-	for channel in channels {
-		client.join(channel.into()).unwrap();
+		if logs_vec.len() >= THRESHOLD || last_flush.elapsed().as_secs() >= TIME_THRESHOLD {
+			let len = logs_vec.len();
+
+			if len == 0 {
+				continue;
+			}
+
+			match Log::bulk_insert(&global.db, logs_vec.clone()).await {
+				Ok(_) => {}
+				Err(e) => {
+					error!("Error while inserting logs into database: {:?}", e);
+				}
+			}
+
+			logs_vec.clear();
+			last_flush = Instant::now();
+			debug!("Flushing logs to database {:?}", len);
+		}
 	}
-
-	join_handle.await.unwrap();
 }
