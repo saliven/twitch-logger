@@ -21,7 +21,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 		.channels
 		.clone()
 		.into_iter()
-		.map(Channel::parse)
+		.map(|c| Channel::parse(format!("#{}", c)))
 		.collect::<Result<Vec<_>, _>>()?;
 
 	let credentials = Credentials::anon();
