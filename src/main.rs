@@ -1,7 +1,7 @@
-use actix_web::web;
 use anyhow::Result;
 use global::GlobalState;
-use tracing::{info, Level};
+use tokio::select;
+use tracing::{error, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod api;
@@ -47,11 +47,17 @@ async fn main() -> Result<()> {
 
 	sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-	let global = web::Data::new(GlobalState::new(db));
-	let global_http = web::Data::clone(&global);
+	let global = GlobalState::new(db);
 
-	tokio::spawn(twitch::chat::start(global));
-	api::start(global_http).await.unwrap();
+	let chat_future = tokio::spawn(twitch::chat::start(global.clone()));
+	let api_future = tokio::spawn(api::start(global.clone()));
+	let ctrl_c_future = tokio::spawn(tokio::signal::ctrl_c());
+
+	select! {
+		_ = chat_future => error!("Chat future exited!"),
+		_ = api_future => error!("Api future existed!"),
+		_ = ctrl_c_future => error!("Ctrl+C Signal received! Terminating...")
+	}
 
 	Ok(())
 }
