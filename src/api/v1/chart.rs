@@ -1,10 +1,12 @@
-use actix_web::{get, web, Error, HttpResponse};
+use axum::{extract::State, http::StatusCode, Json};
 
-use crate::{database::chart, global::GlobalState};
+use crate::{
+	database::chart::{self, Data},
+	global::GlobalState,
+};
 
-#[get("/chart/rate")]
-async fn rate_chart(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let data = chart::get_rate_chart(&global_data.db).await.unwrap();
+pub async fn rate_chart(State(state): State<GlobalState>) -> (StatusCode, Json<Vec<Data>>) {
+	let data = chart::get_rate_chart(&state.db).await.unwrap();
 
-	Ok(HttpResponse::Ok().json(data))
+	(StatusCode::OK, Json(data))
 }

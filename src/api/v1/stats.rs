@@ -1,10 +1,12 @@
-use actix_web::{get, web, Error, HttpResponse};
+use axum::{extract::State, http::StatusCode, Json};
 
-use crate::{database::stats::get_size, global::GlobalState};
+use crate::{
+	database::stats::{get_size, Stats},
+	global::GlobalState,
+};
 
-#[get("/stats/size")]
-async fn stats_size(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let stats = get_size(&global_data.db).await.unwrap();
+pub async fn stats_size(State(state): State<GlobalState>) -> (StatusCode, Json<Stats>) {
+	let stats = get_size(&state.db).await.unwrap();
 
-	Ok(HttpResponse::Ok().json(stats))
+	(StatusCode::OK, Json(stats))
 }

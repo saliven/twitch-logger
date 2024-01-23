@@ -1,4 +1,8 @@
-use actix_web::{get, http::Error, web, HttpResponse};
+use axum::{
+	extract::{Path, Query, State},
+	http::StatusCode,
+	Json,
+};
 use serde::Deserialize;
 
 use crate::{
@@ -7,104 +11,97 @@ use crate::{
 	global::GlobalState,
 };
 
-#[get("/logs/user/{username}/channel/{channel}")]
-async fn user_logs(
-	global_data: web::Data<GlobalState>,
-	path: web::Path<(String, String)>,
-	query: web::Query<ApiPaginationQuery>,
-) -> Result<HttpResponse, Error> {
-	let (username, channel) = path.into_inner();
-
+pub async fn user_logs(
+	State(state): State<GlobalState>,
+	Path((username, channel)): Path<(String, String)>,
+	Query(query): Query<ApiPaginationQuery>,
+) -> (StatusCode, Json<ApiPaginationResponse<Vec<Log>>>) {
 	let offset = query.offset.unwrap_or(0);
 	let limit = query.limit.unwrap_or(100);
 
-	let logs = Log::get_by_username(&global_data.db, &username, &channel, limit, offset)
+	let logs = Log::get_by_username(&state.db, &username, &channel, limit, offset)
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(ApiPaginationResponse { offset, data: logs }))
+	(
+		StatusCode::OK,
+		Json(ApiPaginationResponse { data: logs, offset }),
+	)
 }
 
 #[derive(Deserialize)]
-struct ChannelLogsQuery {
+pub struct ChannelLogsQuery {
 	message_id: String,
 	offset: Option<i64>,
 	limit: Option<i64>,
 }
 
-#[get("/logs/channel/{channel}")]
-async fn channel_log(
-	global_data: web::Data<GlobalState>,
-	path: web::Path<String>,
-	query: web::Query<ChannelLogsQuery>,
-) -> Result<HttpResponse, Error> {
-	let channel = path.into_inner();
-
+pub async fn channel_log(
+	State(state): State<GlobalState>,
+	Path(channel): Path<String>,
+	Query(query): Query<ChannelLogsQuery>,
+) -> (StatusCode, Json<ApiPaginationResponse<Vec<Log>>>) {
 	let offset = query.offset.unwrap_or(0);
 	let limit = query.limit.unwrap_or(100);
 
-	let logs = Log::get_by_channel(&global_data.db, &query.message_id, &channel, limit, offset)
+	let logs = Log::get_by_channel(&state.db, &query.message_id, &channel, limit, offset)
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(ApiPaginationResponse { offset, data: logs }))
+	(
+		StatusCode::OK,
+		Json(ApiPaginationResponse { data: logs, offset }),
+	)
 }
 
 #[derive(Deserialize)]
-struct SearchQuery {
+pub struct SearchQuery {
 	query: String,
 }
 
-#[get("/logs/search/users")]
-async fn search_logs(
-	global_data: web::Data<GlobalState>,
-	query: web::Query<SearchQuery>,
-) -> Result<HttpResponse, Error> {
-	let users = log::search_users(&global_data.db, query.query.as_str())
+pub async fn search_logs(
+	State(state): State<GlobalState>,
+	Query(query): Query<SearchQuery>,
+) -> (StatusCode, Json<Vec<String>>) {
+	let users = log::search_users(&state.db, query.query.as_str())
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(users))
+	(StatusCode::OK, Json(users))
 }
 
-#[get("/logs/user/{username}/active")]
-async fn user_active_channels(
-	global_data: web::Data<GlobalState>,
-	path: web::Path<String>,
-) -> Result<HttpResponse, Error> {
-	let username = path.into_inner();
-
-	let channels = log::get_active_channels(&global_data.db, &username)
+pub async fn user_active_channels(
+	State(state): State<GlobalState>,
+	Path(username): Path<String>,
+) -> (StatusCode, Json<Vec<(String, i64)>>) {
+	let channels = log::get_active_channels(&state.db, &username)
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(channels))
+	(StatusCode::OK, Json(channels))
 }
 
-#[get("/logs/top/users")]
-async fn top_users(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let users = log::get_top_users(&global_data.db).await.unwrap();
+pub async fn top_users(State(state): State<GlobalState>) -> (StatusCode, Json<Vec<(String, i64)>>) {
+	let users = log::get_top_users(&state.db).await.unwrap();
 
-	Ok(HttpResponse::Ok().json(users))
+	(StatusCode::OK, Json(users))
 }
 
-#[get("/logs/top/users/channel/{channel}")]
-async fn top_users_channel(
-	global_data: web::Data<GlobalState>,
-	path: web::Path<String>,
-) -> Result<HttpResponse, Error> {
-	let channel = path.into_inner();
-
-	let users = log::get_top_users_channel(&global_data.db, &channel)
+pub async fn top_users_channel(
+	State(state): State<GlobalState>,
+	Path(channel): Path<String>,
+) -> (StatusCode, Json<Vec<(String, i64)>>) {
+	let users = log::get_top_users_channel(&state.db, &channel)
 		.await
 		.unwrap();
 
-	Ok(HttpResponse::Ok().json(users))
+	(StatusCode::OK, Json(users))
 }
 
-#[get("/logs/top/channels")]
-async fn top_channels(global_data: web::Data<GlobalState>) -> Result<HttpResponse, Error> {
-	let channels = log::get_top_channels(&global_data.db).await.unwrap();
+pub async fn top_channels(
+	State(state): State<GlobalState>,
+) -> (StatusCode, Json<Vec<(String, i64)>>) {
+	let channels = log::get_top_channels(&state.db).await.unwrap();
 
-	Ok(HttpResponse::Ok().json(channels))
+	(StatusCode::OK, Json(channels))
 }
