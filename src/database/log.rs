@@ -17,7 +17,7 @@ pub enum LogType {
 #[derive(Debug, Clone, sqlx::FromRow, Serialize)]
 pub struct Log {
 	pub id: uuid::Uuid,
-	pub user_id: String,
+	pub user_id: Option<String>,
 	pub username: String,
 	pub channel: String,
 	pub content: Option<String>,
@@ -30,7 +30,7 @@ impl Default for Log {
 	fn default() -> Self {
 		Self {
 			id: uuid::Uuid::new_v4(),
-			user_id: String::new(),
+			user_id: Some(String::new()),
 			username: String::new(),
 			channel: String::new(),
 			content: None,
