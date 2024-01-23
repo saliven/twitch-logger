@@ -69,7 +69,7 @@ impl Log {
 		offset: i64,
 	) -> Result<Vec<Self>, sqlx::Error> {
 		let logs =
-			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at FROM logs WHERE username = $1 AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
+			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at, user_id FROM logs WHERE username = $1 AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
 			.bind(username)
 			.bind(channel)
 			.bind(limit)
@@ -90,7 +90,7 @@ impl Log {
 		let uuid = uuid::Uuid::parse_str(id).unwrap();
 
 		let logs =
-			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at FROM logs WHERE created_at <= (SELECT created_at FROM logs WHERE id = $1) AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
+			sqlx::query_as::<_, Self>("SELECT id, username, channel, content, log_type, created_at, user_id FROM logs WHERE created_at <= (SELECT created_at FROM logs WHERE id = $1) AND channel = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4")
 			.bind(uuid)
 			.bind(channel)
 			.bind(limit)
