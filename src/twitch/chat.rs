@@ -36,7 +36,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 		match msg.as_typed()? {
 			Message::Privmsg(msg)
 				if (!msg.text().starts_with("$") || !msg.text().starts_with("!"))
-					&& global
+					&& !global
 						.ignored_users
 						.contains(&msg.sender().name().to_string()) =>
 			{
