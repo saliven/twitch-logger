@@ -34,13 +34,15 @@ pub async fn start(global: GlobalState) -> Result<()> {
 		let mut logs_vec = logs.lock().await;
 
 		match msg.as_typed()? {
-			Message::Privmsg(msg) => logs_vec.push(Log {
-				channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
-				content: Some(msg.text().to_string()),
-				user_id: Some(msg.sender().id().to_string()),
-				username: msg.sender().name().to_string().to_lowercase(),
-				..Default::default()
-			}),
+			Message::Privmsg(msg) if !msg.text().starts_with("$") || !msg.text().starts_with("!") => {
+				logs_vec.push(Log {
+					channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
+					content: Some(msg.text().to_string()),
+					user_id: Some(msg.sender().id().to_string()),
+					username: msg.sender().name().to_string().to_lowercase(),
+					..Default::default()
+				})
+			}
 			Message::ClearChat(msg) if msg.action().is_ban() || msg.action().is_time_out() => {
 				match msg.action() {
 					Action::Ban(ban) => logs_vec.push(Log {
