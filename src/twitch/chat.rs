@@ -70,6 +70,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 				}
 			}
 			Message::Reconnect => {
+				info!("Reconnecting to Twitch IRC");
 				client.reconnect().await?;
 				client.join_all(&channels).await?;
 			}
@@ -93,6 +94,7 @@ pub async fn start(global: GlobalState) -> Result<()> {
 
 			logs_vec.clear();
 			last_flush = Instant::now();
+
 			debug!("Flushing logs to database {:?}", len);
 		}
 	}
