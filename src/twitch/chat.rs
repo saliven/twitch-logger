@@ -38,13 +38,13 @@ pub async fn start(global: GlobalState) -> Result<()> {
 				if (!msg.text().starts_with("$") || !msg.text().starts_with("!"))
 					&& !global
 						.ignored_users
-						.contains(&msg.sender().name().to_string()) =>
+						.contains(&msg.sender().login().to_string()) =>
 			{
 				logs_vec.push(Log {
 					channel: msg.channel().get(1..).unwrap().to_string().to_lowercase(),
 					content: Some(msg.text().to_string()),
 					user_id: Some(msg.sender().id().to_string()),
-					username: msg.sender().name().to_string().to_lowercase(),
+					username: msg.sender().login().to_string().to_lowercase(),
 					..Default::default()
 				})
 			}
