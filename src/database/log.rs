@@ -8,6 +8,7 @@ extern crate serde_json;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize, Default)]
 #[sqlx(type_name = "log_type", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum LogType {
 	#[default]
 	Chat,
