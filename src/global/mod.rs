@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use tracing::info;
+
 use crate::utils;
 
 #[derive(Clone)]
@@ -20,6 +22,9 @@ impl GlobalState {
 			.into_iter()
 			.chain(bots.into_iter())
 			.collect::<HashSet<String>>();
+
+		info!("Loaded {} channels", channels.len());
+		info!("Loaded ignored users: {:?}", ignored_users);
 
 		Self {
 			db,
