@@ -186,12 +186,18 @@ pub async fn search_users(db: &sqlx::PgPool, query: &str) -> Result<Vec<String>,
 	Ok(users)
 }
 
+#[cached(
+	time = 3600,
+	result = true,
+	key = "String",
+	convert = r#"{ String::from(username) }"#
+)]
 pub async fn username_history(
 	db: &sqlx::PgPool,
 	username: &str,
 ) -> Result<Vec<String>, sqlx::Error> {
 	let username = sqlx::query_scalar::<_, String>(
-		"SELECT DISTINCT FROM logs WHERE user_id IN (SELECT DISTINCT user_id WHERE username = $1)",
+		"SELECT DISTINCT username FROM logs WHERE user_id IN (SELECT DISTINCT user_id WHERE username = $1)",
 	)
 	.bind(username)
 	.fetch_all(db)
