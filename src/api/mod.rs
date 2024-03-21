@@ -41,7 +41,8 @@ pub async fn start(global: GlobalState) -> Result<(), Error> {
 		.route(
 			"/top/users/channel/:channel",
 			get(v1::log::top_users_channel),
-		);
+		)
+		.route("/history/:username", get(v1::log::username_history));
 
 	let v1_routes = Router::new()
 		.nest("/logs", log_routes)

@@ -117,3 +117,14 @@ pub async fn top_channels(
 
 	(StatusCode::OK, Json(channels))
 }
+
+pub async fn username_history(
+	State(state): State<GlobalState>,
+	Path(username): Path<String>,
+) -> (StatusCode, Json<Vec<String>>) {
+	let history = log::username_history(&state.db, &username.to_lowercase())
+		.await
+		.unwrap();
+
+	(StatusCode::OK, Json(history))
+}

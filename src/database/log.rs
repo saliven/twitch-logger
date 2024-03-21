@@ -176,12 +176,26 @@ pub async fn get_top_channels(db: &sqlx::PgPool) -> Result<Vec<(String, i64)>, s
 	convert = r#"{ String::from(query) }"#
 )]
 pub async fn search_users(db: &sqlx::PgPool, query: &str) -> Result<Vec<String>, sqlx::Error> {
-	let users = sqlx::query_as::<_, (String,)>(
+	let users = sqlx::query_scalar::<_, String>(
 		"SELECT DISTINCT username FROM logs WHERE username ILIKE $1 LIMIT 10",
 	)
 	.bind(format!("%{}%", query))
 	.fetch_all(db)
 	.await?;
 
-	Ok(users.into_iter().map(|(username,)| username).collect())
+	Ok(users)
+}
+
+pub async fn username_history(
+	db: &sqlx::PgPool,
+	username: &str,
+) -> Result<Vec<String>, sqlx::Error> {
+	let username = sqlx::query_scalar::<_, String>(
+		"SELECT DISTINCT FROM logs WHERE user_id IN (SELECT DISTINCT user_id WHERE username = $1)",
+	)
+	.bind(username)
+	.fetch_all(db)
+	.await?;
+
+	Ok(username)
 }
