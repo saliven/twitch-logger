@@ -1,0 +1,3 @@
+[clickhouse]
+url = "http://localhost:8123"
+database = "logger"

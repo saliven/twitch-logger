@@ -1,0 +1,18 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+base64 = "0.22.1"
+cached = { version = "0.53.1", features = ["async"] }
+clickhouse = { version = "0.12.2", features = ["uuid", "time", "inserter"] }
+poem = "3.1.0"
+poem-openapi = { version = "5.1.1", features = ["time"] }
+prometheus-client = "0.22.3"
+serde = { version = "1.0.167", features = ["derive"] }
+serde_repr = "0.1.19"
+strum = "0.26.3"
+strum_macros = "0.26.4"
+time = { version = "0.3.36", features = ["serde"] }

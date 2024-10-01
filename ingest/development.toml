@@ -1,0 +1,7 @@
+[clickhouse]
+url = "http://localhost:8123"
+database = "logger"
+
+[twitch]
+channels = ["botiven", "saliven", "haiset", "agraelus", "czechcloud", "herdyn"]
+ignored_users = []

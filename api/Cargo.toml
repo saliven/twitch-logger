@@ -1,0 +1,36 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0.167", features = ["derive"] }
+tokio = { version = "1.29.1", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+cached = { version = "0.53.1", features = ["async"] }
+anyhow = "1.0.89"
+tmi = "0.7.2"
+clickhouse = { version = "0.12.2", features = ["uuid", "time", "inserter"] }
+figment = { version = "0.10.19", features = ["env", "toml"] }
+lazy_static = "1.5.0"
+serde_repr = "0.1.19"
+time = { version = "0.3.36", features = ["serde"] }
+base64 = "0.22.1"
+poem-openapi = { version = "5.1.1", features = [
+	"chrono",
+	"swagger-ui",
+	"rapidoc",
+	"redoc",
+	"uuid",
+	"email",
+	"time",
+] }
+poem = { version = "3.1.0", features = ["anyhow"] }
+poem-extensions = "0.9.0"
+strum = "0.26.3"
+strum_macros = "0.26.4"
+prometheus-client = "0.22.3"
+utils = { workspace = true }

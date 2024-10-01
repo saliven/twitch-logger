@@ -1,0 +1,19 @@
+[package]
+name = "ingest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.167", features = ["derive"] }
+tokio = { version = "1.29.1", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+anyhow = "1.0.89"
+tmi = "0.7.2"
+clickhouse = { version = "0.12.2", features = ["uuid", "time", "inserter"] }
+figment = { version = "0.10.19", features = ["env", "toml"] }
+time = { version = "0.3.36", features = ["serde"] }
+utils = { workspace = true }
+lazy_static = "1.5.0"
+poem = "3.1.0"
+prometheus-client = "0.22.3"

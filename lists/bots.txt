@@ -1,4 +1,0 @@
-streamelements
-fossabot
-supibot
-nightbot
