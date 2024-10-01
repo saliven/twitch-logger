@@ -18,12 +18,11 @@
 	"editable": true,
 	"fiscalYearStartMonth": 0,
 	"graphTooltip": 0,
-	"id": 1,
 	"links": [],
 	"panels": [
 		{
 			"datasource": {
-				"default": true,
+				"default": false,
 				"type": "prometheus",
 				"uid": "prometheus"
 			},
@@ -87,12 +86,16 @@
 						"type": "prometheus",
 						"uid": "prometheus"
 					},
-					"editorMode": "code",
-					"expr": "sum(rate(http_request_duration_sum[5m])) / sum(rate(http_request_duration_count[5m]))\n",
+					"disableTextWrap": false,
+					"editorMode": "builder",
+					"expr": "sum(rate(http_request_duration_sum{path!=\"/metrics\"}[5m])) / sum(rate(http_request_duration_count[5m]))",
+					"fullMetaSearch": false,
+					"includeNullMetadata": true,
 					"instant": false,
 					"legendFormat": "__auto",
 					"range": true,
-					"refId": "A"
+					"refId": "A",
+					"useBackend": false
 				}
 			],
 			"title": "Average Response Time",
@@ -279,7 +282,7 @@
 		},
 		{
 			"datasource": {
-				"default": true,
+				"default": false,
 				"type": "prometheus",
 				"uid": "prometheus"
 			},
@@ -366,7 +369,7 @@
 					},
 					"disableTextWrap": false,
 					"editorMode": "builder",
-					"expr": "sum by(path) (rate(http_requests_total[1m]))",
+					"expr": "sum by(path) (rate(http_requests_total{path!=\"/metrics\"}[1m]))",
 					"fullMetaSearch": false,
 					"includeNullMetadata": true,
 					"instant": false,
@@ -381,7 +384,7 @@
 		},
 		{
 			"datasource": {
-				"default": true,
+				"default": false,
 				"type": "prometheus",
 				"uid": "prometheus"
 			},
@@ -463,7 +466,7 @@
 						"type": "prometheus",
 						"uid": "prometheus"
 					},
-					"editorMode": "code",
+					"editorMode": "builder",
 					"expr": "sum by (status_code) (rate(http_responses_total[1m]))",
 					"instant": false,
 					"legendFormat": "__auto",
@@ -795,6 +798,6 @@
 	"timezone": "browser",
 	"title": "Dashboard",
 	"uid": "ddzieb4wjc3k0c",
-	"version": 5,
+	"version": 6,
 	"weekStart": ""
 }
