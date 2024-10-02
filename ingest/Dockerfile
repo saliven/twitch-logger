@@ -1,4 +1,4 @@
-FROM rust:buster as planner
+FROM rust:buster AS planner
 
 WORKDIR /app
 
@@ -6,10 +6,10 @@ RUN cargo install cargo-chef
 
 COPY . /app
 
-RUN cargo chef prepare --recipe-path recipe.json
+RUN cargo chef prepare --bin ingest --recipe-path recipe.json
 
 # Stage 2 - build deps
-FROM rust:buster as cacher
+FROM rust:buster AS cacher
 
 WORKDIR /app
 
@@ -17,10 +17,10 @@ RUN cargo install cargo-chef
 
 COPY --from=planner /app/recipe.json recipe.json
 
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --bin ingest --release --recipe-path recipe.json
 
 # Stage 3 - build app
-FROM rust:buster as builder
+FROM rust:buster AS builder
 
 COPY . /app
 
@@ -31,15 +31,13 @@ COPY --from=cacher /app/target target
 COPY --from=cacher /usr/local/cargo /usr/local/cargo
 
 # Build
-RUN cargo build --release
+RUN cargo build --bin ingest --release
 
 # Stage 4 - run the app
-FROM rust:buster as runner
+FROM rust:buster AS runner
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/server ./server
+COPY --from=builder /app/target/release/ingest ./ingest
 
-COPY ./lists ./lists
-
-CMD ["./server"]
+CMD ["./ingest"]
