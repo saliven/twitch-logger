@@ -87,7 +87,7 @@
 						"uid": "prometheus"
 					},
 					"disableTextWrap": false,
-					"editorMode": "builder",
+					"editorMode": "code",
 					"expr": "sum(rate(http_request_duration_sum{path!=\"/metrics\"}[5m])) / sum(rate(http_request_duration_count[5m]))",
 					"fullMetaSearch": false,
 					"includeNullMetadata": true,
@@ -581,7 +581,7 @@
 		},
 		{
 			"datasource": {
-				"default": true,
+				"default": false,
 				"type": "prometheus",
 				"uid": "prometheus"
 			},
@@ -791,13 +791,13 @@
 		"list": []
 	},
 	"time": {
-		"from": "now-30m",
+		"from": "now-1h",
 		"to": "now"
 	},
 	"timepicker": {},
 	"timezone": "browser",
 	"title": "Dashboard",
 	"uid": "ddzieb4wjc3k0c",
-	"version": 6,
+	"version": 1,
 	"weekStart": ""
 }
