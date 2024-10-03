@@ -30,7 +30,7 @@ pub fn load() -> Config {
 	if ENV.as_str() == "development" {
 		config = config.merge(Toml::file("./ingest/development.toml"));
 	} else {
-		config = config.merge(Env::raw());
+		config = config.merge(Env::raw().split("_"));
 	}
 
 	config.extract().unwrap()
