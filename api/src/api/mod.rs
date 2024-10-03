@@ -6,6 +6,7 @@ use crate::{
 };
 use anyhow::Result;
 use poem::{
+	get, handler,
 	listener::TcpListener,
 	middleware::{AddData, Cors},
 	EndpointExt, Route, Server,
@@ -14,6 +15,11 @@ use tracing::info;
 use utils::metrics::PrometheusExporter;
 
 mod v1;
+
+#[handler]
+fn health() -> String {
+	"OK".to_string()
+}
 
 pub async fn start(global: Arc<GlobalState>) -> Result<(), Error> {
 	let port = std::env::var("PORT")
@@ -27,6 +33,7 @@ pub async fn start(global: Arc<GlobalState>) -> Result<(), Error> {
 	let cors = Cors::new();
 
 	let app = Route::new()
+		.at("/health", get(health))
 		.nest("/v1", v1_route)
 		.nest(
 			"/metrics",
