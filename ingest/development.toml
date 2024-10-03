@@ -6,4 +6,4 @@ password = ""
 
 [twitch]
 channels = ["forsen", "nymn"]
-ignored_users = []
+ignored = []

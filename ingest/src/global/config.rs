@@ -9,7 +9,7 @@ use crate::ENV;
 #[derive(Debug, Deserialize, Clone)]
 pub struct TwitchConfig {
 	pub channels: Vec<String>,
-	pub ignored_users: Vec<String>,
+	pub ignored: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

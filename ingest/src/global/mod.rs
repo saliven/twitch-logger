@@ -19,7 +19,7 @@ impl GlobalState {
 	pub fn new(config: Config, db: Client) -> Self {
 		let ignored_users = config
 			.twitch
-			.ignored_users
+			.ignored
 			.clone()
 			.into_iter()
 			.collect::<HashSet<String>>();
