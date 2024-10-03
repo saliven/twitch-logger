@@ -16,6 +16,8 @@ pub struct TwitchConfig {
 pub struct ClickhouseConfig {
 	pub url: String,
 	pub database: String,
+	pub user: String,
+	pub password: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -42,6 +42,8 @@ async fn main() -> Result<()> {
 
 	let db = Client::default()
 		.with_url(&config.clickhouse.url)
+		.with_password(&config.clickhouse.password)
+		.with_user(&config.clickhouse.user)
 		.with_database(&config.clickhouse.database);
 
 	let metrics = Metrics::new();
