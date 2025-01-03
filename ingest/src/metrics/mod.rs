@@ -8,7 +8,6 @@ use prometheus_client::{
 use utils::metrics::BUCKETS;
 
 pub mod labels;
-pub mod server;
 
 #[derive(Debug)]
 pub struct Metrics {

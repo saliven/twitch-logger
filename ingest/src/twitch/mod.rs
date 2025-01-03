@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use tmi::{Action, Client, Credentials, Message};
 use tokio::sync::Mutex;
-use tracing::{debug, info};
+use tracing::info;
 use utils::database::{Log, LogType};
 
 use crate::{global::GlobalState, metrics::labels::DatabaseQuery};
@@ -58,7 +58,11 @@ async fn commit_logs(inserter: Arc<Mutex<Vec<Log>>>, global: Arc<GlobalState>) {
 			start.elapsed().as_millis(),
 		);
 
-		debug!("Inserted {} logs", logs.len());
+		info!(
+			"Inserted {} logs in {}ms",
+			logs.len(),
+			start.elapsed().as_millis()
+		);
 	}
 }
 

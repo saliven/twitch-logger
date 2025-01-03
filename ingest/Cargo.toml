@@ -7,9 +7,9 @@ edition = "2021"
 serde = { version = "1.0.167", features = ["derive"] }
 tokio = { version = "1.29.1", features = ["full"] }
 tracing = "0.1.37"
-tracing-subscriber = "0.3.17"
+tracing-subscriber = { version = "0.3.17", features = ["json"] }
 anyhow = "1.0.89"
-tmi = "0.7.2"
+tmi = { git = "https://github.com/saliven/tmi-rs", branch = "subtember-fix" }
 clickhouse = { version = "0.12.2", features = ["uuid", "time", "inserter"] }
 figment = { version = "0.10.19", features = ["env", "toml"] }
 time = { version = "0.3.36", features = ["serde"] }
