@@ -4,3 +4,4 @@
 *.tfstate.backup
 *.tfplan
 .terraform/
+.DS_Store
