@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use metrics::Metrics;
 use tokio::select;
 use tracing::{info, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::fmt;
 
 mod api;
 mod global;
@@ -28,13 +28,20 @@ async fn main() -> Result<()> {
 
 	let filter_level = std::env::var("RUST_LOG")
 		.map(|s| s.parse().unwrap_or(fallback_log_level))
-		.unwrap_or(Level::DEBUG);
+		.unwrap_or(fallback_log_level);
 
-	let subscriber = FmtSubscriber::builder()
-		.with_max_level(filter_level)
-		.finish();
-
-	tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+	match ENV.as_str() {
+		"production" => fmt()
+			.with_max_level(filter_level)
+			.json()
+			.flatten_event(true)
+			.with_target(false)
+			.with_thread_ids(true)
+			.with_file(true)
+			.with_line_number(true)
+			.init(),
+		_ => fmt().with_max_level(filter_level).compact().init(),
+	};
 
 	info!("Starting up");
 

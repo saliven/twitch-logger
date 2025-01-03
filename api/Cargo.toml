@@ -9,7 +9,7 @@ edition = "2021"
 serde = { version = "1.0.167", features = ["derive"] }
 tokio = { version = "1.29.1", features = ["full"] }
 tracing = "0.1.37"
-tracing-subscriber = "0.3.17"
+tracing-subscriber = { version = "0.3.17", features = ["json"] }
 cached = { version = "0.53.1", features = ["async"] }
 anyhow = "1.0.89"
 tmi = "0.7.2"
@@ -34,3 +34,4 @@ strum = "0.26.3"
 strum_macros = "0.26.4"
 prometheus-client = "0.22.3"
 utils = { workspace = true }
+sql-builder = "3.1.1"

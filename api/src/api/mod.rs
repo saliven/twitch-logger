@@ -3,6 +3,7 @@ use std::{io::Error, sync::Arc};
 use crate::{
 	global::GlobalState,
 	metrics::{self},
+	ENV,
 };
 use anyhow::Result;
 use poem::{
@@ -25,8 +26,13 @@ pub async fn start(global: Arc<GlobalState>) -> Result<(), Error> {
 	let port = std::env::var("PORT")
 		.map(|s| s.parse().unwrap_or(4001))
 		.unwrap_or(4001);
+	let hostname = match ENV.as_str() {
+		"development" => "localhost",
+		"production" => "0.0.0.0",
+		_ => "0.0.0.0",
+	};
 
-	info!("Starting API server on port {}", port);
+	info!("Starting HTTP server on port {}", port);
 
 	let v1_route = v1::route();
 
@@ -43,6 +49,6 @@ pub async fn start(global: Arc<GlobalState>) -> Result<(), Error> {
 		.with(AddData::new(global))
 		.with(cors);
 
-	let listener = TcpListener::bind(format!("localhost:{}", port));
+	let listener = TcpListener::bind(format!("{}:{}", hostname, port));
 	Server::new(listener).run(app).await
 }

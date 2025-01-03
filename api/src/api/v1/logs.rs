@@ -1,15 +1,16 @@
 use std::sync::Arc;
 
+use clickhouse::Row;
 use poem::web::Data;
 use poem_openapi::{
 	param::Query,
-	payload::Json,
+	payload::{Json, PlainText},
 	types::{ParseFromJSON, ToJSON},
 	ApiResponse, Object, OpenApi,
 };
-use tracing::debug;
+use serde::{Deserialize, Serialize};
 use utils::{
-	database::{self, Log, StatsObject},
+	database::{self, Log},
 	filter::{FieldDefinition, FieldType, Filter},
 };
 
@@ -25,6 +26,12 @@ pub enum LogResponse<T: Send + Sync + ToJSON> {
 	NotFound,
 	#[oai(status = 500)]
 	InternalServerError,
+}
+
+#[derive(Debug, Object, Clone, Serialize, Deserialize, Row)]
+pub struct StatsObject {
+	total_rows: i32,
+	total_bytes: i64,
 }
 
 #[derive(Debug, Object)]
@@ -52,6 +59,7 @@ impl Logs {
 		filter: Query<Option<String>>,
 		#[oai(validator(maximum(value = "100")))] limit: Query<Option<u32>>,
 	) -> LogResponse<utils::pagination::PaginatedResponse<Log>> {
+		// TODO: when there are multiple filters with the same field, it should be combined with OR
 		let state = state.0;
 		let field_definitions = vec![
 			FieldDefinition {
@@ -92,7 +100,6 @@ impl Logs {
 			}
 		})
 		.await;
-		debug!("elapsed: {:?}", start.elapsed().as_millis());
 
 		state.metrics.observe_database_query(
 			DatabaseQuery {
@@ -102,6 +109,20 @@ impl Logs {
 		);
 
 		LogResponse::Ok(results.unwrap())
+	}
+
+	#[oai(path = "/filter_suggestions", method = "get")]
+	pub async fn filter_suggestions(
+		&self,
+		state: Data<&Arc<GlobalState>>,
+		filter: Query<Option<String>>,
+	) -> PlainText<String> {
+		// TODO: suggest filter fields based on the filter string
+		// - e.g. if the filter string is "username:foo", suggest "channel" and "log_type" based on the most active channels and log types
+		// - e.g. if the filter string is "channel:foo", suggest "username" and "log_type" based on the most active users and log types
+		// - e.g. if the filter string is "log_type:foo", suggest "username" and "channel" based on the most active users and channels
+
+		PlainText("Test".into())
 	}
 
 	#[oai(path = "/user/search", method = "get")]
@@ -146,11 +167,13 @@ impl Logs {
 
 	#[oai(path = "/stats", method = "get")]
 	pub async fn stats(&self, state: Data<&Arc<GlobalState>>) -> LogResponse<StatsObject> {
-		let stats = database::get_stats(&state.db).await;
+		let count = database::get_log_count(&state.db);
+		let size = database::get_size(&state.db);
+		let (count, size) = tokio::join!(count, size);
 
-		match stats {
-			Ok(stats) => LogResponse::Ok(Json(stats)),
-			Err(_) => LogResponse::InternalServerError,
-		}
+		LogResponse::Ok(Json(StatsObject {
+			total_bytes: size.unwrap(),
+			total_rows: count.unwrap(),
+		}))
 	}
 }

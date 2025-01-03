@@ -2,9 +2,7 @@ use poem::Route;
 use poem_extensions::UniOpenApi;
 use poem_openapi::OpenApiService;
 
-// pub mod chart;
 pub mod logs;
-// pub mod stats;
 
 #[derive(UniOpenApi)]
 pub struct ApisUnion(logs::Logs);
