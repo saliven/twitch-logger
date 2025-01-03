@@ -1,8 +1,10 @@
 use anyhow::{anyhow, Result};
+use regex::Regex;
+use sql_builder::{quote, SqlBuilder};
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
-use crate::database::builder::QueryBuilder;
+static VALUE_REGEX: &str = r"^[a-zA-Z0-9_]+$";
 
 #[derive(Debug, Clone, Copy, Display, PartialEq, EnumString, Hash)]
 #[strum(serialize_all = "camelCase")]
@@ -17,9 +19,6 @@ pub enum Operator {
 	StartsWith,
 	EndsWith,
 	In,
-	NotIn,
-	HasAll,
-	HasAny,
 }
 
 impl Operator {
@@ -35,9 +34,6 @@ impl Operator {
 			Operator::StartsWith => "LIKE",
 			Operator::EndsWith => "LIKE",
 			Operator::In => "IN",
-			Operator::NotIn => "NOT IN",
-			Operator::HasAll => "HAS ALL",
-			Operator::HasAny => "HAS ANY",
 		}
 	}
 }
@@ -103,28 +99,38 @@ impl Filter {
 		Ok(Filter { conditions })
 	}
 
-	pub fn apply_to_query_builder(&self, builder: QueryBuilder) -> QueryBuilder {
-		let conditions: Vec<(String, String, String)> = self
-			.conditions
-			.iter()
-			.map(|condition| {
-				let value = match condition.operator {
-					Operator::Contains => format!("%{}%", condition.value),
-					Operator::StartsWith => format!("{}%", condition.value),
-					Operator::EndsWith => format!("%{}", condition.value),
-					Operator::In | Operator::NotIn => format!("({})", condition.value.replace('|', ",")),
-					Operator::HasAll | Operator::HasAny => format!("[{}]", condition.value.replace('|', ",")),
-					_ => condition.value.clone(),
-				};
-				(
-					condition.field.clone(),
-					condition.operator.to_sql().to_string(),
-					value,
-				)
-			})
-			.collect();
+	pub fn apply_to_query_builder(&self, builder: &mut SqlBuilder) {
+		self.conditions.iter().for_each(|condition| {
+			match condition.operator {
+				Operator::Eq | Operator::Ne | Operator::Gt | Operator::Lt | Operator::Ge | Operator::Le => {
+					let condition = format!(
+						"{} {} {}",
+						&condition.field,
+						&condition.operator.to_sql(),
+						quote(&condition.value)
+					);
 
-		builder.where_clause(&conditions)
+					builder.and_where(condition)
+				}
+				Operator::Contains => builder.and_where_like_any(&condition.field, quote(&condition.value)),
+				Operator::StartsWith => {
+					builder.and_where_like_left(&condition.field, quote(&condition.value))
+				}
+				Operator::EndsWith => {
+					builder.and_where_like_right(&condition.field, quote(&condition.value))
+				}
+				Operator::In => builder.and_where(format!(
+					"hasAny({}, {})",
+					condition.field,
+					condition
+						.value
+						.split("|")
+						.map(quote)
+						.collect::<Vec<String>>()
+						.join(",")
+				)),
+			};
+		});
 	}
 }
 
@@ -164,10 +170,7 @@ fn validate_operator(field_type: &FieldType, operator: &Operator) -> Result<()> 
 			}
 		}
 		FieldType::Array(_) => {
-			if !matches!(
-				operator,
-				Operator::In | Operator::NotIn | Operator::HasAll | Operator::HasAny
-			) {
+			if !matches!(operator, Operator::In) {
 				return Err(anyhow!("Invalid operator for array field"));
 			}
 		}
@@ -177,7 +180,15 @@ fn validate_operator(field_type: &FieldType, operator: &Operator) -> Result<()> 
 
 fn validate_value(field_type: &FieldType, value: &str) -> Result<()> {
 	match field_type {
-		FieldType::String => Ok(()),
+		FieldType::String => {
+			let re = Regex::new(VALUE_REGEX)?;
+
+			if re.is_match(value) {
+				Ok(())
+			} else {
+				Err(anyhow!("Invalid value"))
+			}
+		}
 		FieldType::Integer => {
 			value.parse::<i64>()?;
 			Ok(())
@@ -191,9 +202,7 @@ fn validate_value(field_type: &FieldType, value: &str) -> Result<()> {
 			Ok(())
 		}
 		FieldType::DateTime => {
-			// Implement datetime parsing logic here
-			// For example, using chrono:
-			// chrono::DateTime::parse_from_rfc3339(value)?;
+			// TODO: implement datetime validation
 			Ok(())
 		}
 		FieldType::Array(inner_type) => {

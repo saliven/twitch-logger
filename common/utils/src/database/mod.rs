@@ -4,20 +4,18 @@ use std::{
 };
 
 use anyhow::Result;
-use builder::QueryBuilder;
 use cached::proc_macro::cached;
 use clickhouse::{Client, Row};
 use poem_openapi::{Enum, Object};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use sql_builder::SqlBuilder;
 use time::OffsetDateTime;
 
 use crate::{
 	filter::Filter,
 	pagination::{decode_cursor, Pageable},
 };
-
-pub mod builder;
 
 #[derive(Debug, Clone, Default, Serialize_repr, Deserialize_repr, Enum)]
 #[oai(rename_all = "camelCase")]
@@ -34,7 +32,7 @@ pub struct Log {
 	pub channel: String,
 	pub content: Option<String>,
 	pub log_type: LogType,
-	#[serde(with = "clickhouse::serde::time::datetime64::micros")]
+	#[serde(with = "clickhouse::serde::time::datetime64::nanos")]
 	pub created_at: OffsetDateTime,
 	pub user_id: Option<String>,
 	pub color: Option<String>,
@@ -52,12 +50,6 @@ impl Pageable for Log {
 	}
 }
 
-#[derive(Debug, Object, Clone, Serialize, Deserialize, Row)]
-pub struct StatsObject {
-	total_rows: i64,
-	total_bytes: i64,
-}
-
 #[cached(
 	time = 10,
 	result = true,
@@ -69,34 +61,34 @@ pub async fn logs(
 	filters: Option<Filter>,
 	cursor: Option<String>,
 	limit: u32,
-) -> Result<Vec<Log>, clickhouse::error::Error> {
-	let mut builder = QueryBuilder::new().select(&["?fields"]).from("logs");
+) -> Result<Vec<Log>> {
+	let mut builder = SqlBuilder::select_from("logs");
+	builder.field("?fields");
 
 	if let Some(filters) = filters {
-		builder = filters.apply_to_query_builder(builder);
+		filters.apply_to_query_builder(&mut builder);
 	}
 
 	if let Some(cursor_str) = cursor {
 		let cursor_values = decode_cursor(&cursor_str);
 		if let Some(created_at) = cursor_values.get("created_at") {
-			builder = builder.where_clause(&[(
-				"created_at".to_string(),
-				"<".to_string(),
-				created_at.to_string(),
-			)]);
+			builder.and_where_lt("created_at", created_at);
 		}
 	}
 
-	builder = builder.order_by("created_at", "DESC").limit(limit as usize);
+	let mut sql = builder.order_desc("created_at").limit(limit).sql()?;
+	sql.pop();
 
-	let (query, params) = builder.build();
+	let db_query = db.query(&sql);
 
-	let mut db_query = db.query(&query);
-
-	for param in params {
-		db_query = db_query.bind(param);
-	}
 	let logs = db_query.fetch_all().await?;
+
+	tracing::info!(
+		database.query = sql,
+		database.length = logs.len(),
+		"Fetched {} logs",
+		logs.len()
+	);
 
 	Ok(logs)
 }
@@ -178,16 +170,19 @@ pub async fn search_users(
 }
 
 #[cached(time = 3600, result = true, convert = r#"{ true }"#, key = "bool")]
-pub async fn get_stats(db: &Client) -> Result<StatsObject, clickhouse::error::Error> {
+pub async fn get_log_count(db: &Client) -> Result<i32, clickhouse::error::Error> {
+	db.query("SELECT count(*) FROM logs")
+		.fetch_one::<i32>()
+		.await
+}
+
+#[cached(time = 3600, result = true, convert = r#"{ true }"#, key = "bool")]
+pub async fn get_size(db: &Client) -> Result<i64, clickhouse::error::Error> {
 	db.query(
-		"SELECT
-    sum(rows) AS total_rows,
-    sum(bytes) AS total_bytes
-FROM system.parts
-WHERE active AND database = 'logger' AND table = 'logs'
-GROUP BY table
-ORDER BY sum(bytes) DESC",
+		"SELECT sum(bytes) as total_bytes
+	 FROM cluster('clickhouse-cluster', system.parts)
+	 WHERE database = 'logger' AND table = 'logs_local'",
 	)
-	.fetch_one::<StatsObject>()
+	.fetch_one::<i64>()
 	.await
 }

@@ -13,7 +13,13 @@ use serde::Serialize;
 #[derive(Debug, Serialize, Object)]
 pub struct PaginatedResponse<T: ParseFromJSON + ToJSON> {
 	pub data: Vec<T>,
-	pub next_cursor: Option<String>,
+	pub cursors: Option<Cursors>,
+}
+
+#[derive(Debug, Serialize, Object)]
+pub struct Cursors {
+	pub after: Option<String>,
+	pub before: Option<String>,
 }
 
 pub trait Pageable {
@@ -53,7 +59,8 @@ where
 
 	let items = fetch_data(cursor.clone(), limit).await?;
 
-	let next_cursor = if items.len() as u32 == limit {
+	// TODO: cursor resolution should be smarter and count the number of items
+	let before_cursor = if items.len() == limit as usize {
 		let last_item = items.last().unwrap();
 		let cursor_values = last_item.get_cursor_values();
 		let cursor = encode_cursor(&cursor_values);
@@ -64,7 +71,10 @@ where
 
 	let response = PaginatedResponse {
 		data: items,
-		next_cursor,
+		cursors: Some(Cursors {
+			after: None,
+			before: before_cursor,
+		}),
 	};
 
 	Ok(Json(response))

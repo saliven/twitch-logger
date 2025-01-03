@@ -11,8 +11,11 @@ clickhouse = { version = "0.12.2", features = ["uuid", "time", "inserter"] }
 poem = "3.1.0"
 poem-openapi = { version = "5.1.1", features = ["time"] }
 prometheus-client = "0.22.3"
+regex = "1.11.1"
 serde = { version = "1.0.167", features = ["derive"] }
 serde_repr = "0.1.19"
+sql-builder = "3.1.1"
 strum = "0.26.3"
 strum_macros = "0.26.4"
 time = { version = "0.3.36", features = ["serde"] }
+tracing = "0.1.40"
