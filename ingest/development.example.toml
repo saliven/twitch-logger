@@ -1,0 +1,9 @@
+[clickhouse]
+url = "http://localhost:8123"
+database = "logger"
+user = "default"
+password = "password"
+
+[twitch]
+channels = ["forsen", "nymn", "xqc"]
+ignored = []
