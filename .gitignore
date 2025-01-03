@@ -1,2 +1,6 @@
 /target
 .env
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraform/
