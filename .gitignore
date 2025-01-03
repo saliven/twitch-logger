@@ -1,7 +1,14 @@
+# Rust / Cargo
 /target
 .env
+development.toml
+
+# Terraform
 *.tfstate
-*.tfstate.backup
+*.tfstate.**
+*.tfvars
 *.tfplan
-.terraform/
+.terraform
+
+# Ignore Mac system files
 .DS_Store
