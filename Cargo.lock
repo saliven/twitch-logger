@@ -116,10 +116,11 @@ dependencies = [
  "prometheus-client",
  "serde",
  "serde_repr",
+ "sql-builder",
  "strum",
  "strum_macros",
  "time",
- "tmi",
+ "tmi 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -941,7 +942,7 @@ dependencies = [
  "prometheus-client",
  "serde",
  "time",
- "tmi",
+ "tmi 0.7.2 (git+https://github.com/saliven/tmi-rs?branch=subtember-fix)",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -1502,9 +1503,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.11.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38200e5ee88914975b69f657f0801b6f6dccafd44fd9326302a4aaeecfacb1d8"
+checksum = "b544ef1b4eac5dc2db33ea63606ae9ffcfac26c1416a2806ae0bf5f56b201191"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1859,6 +1860,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
+name = "sql-builder"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1008d95d2ec2d062959352527be30e10fec42a1aa5e5a48d990a5ff0fb9bdc0"
+dependencies = [
+ "anyhow",
+ "thiserror",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2023,6 +2034,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tmi"
+version = "0.7.2"
+source = "git+https://github.com/saliven/tmi-rs?branch=subtember-fix#52b723ff006477d703e83c06821fcaef2917c944"
+dependencies = [
+ "cfg-if",
+ "chrono",
+ "futures-util",
+ "rand",
+ "rustls-native-certs",
+ "smallvec",
+ "tokio",
+ "tokio-rustls",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "tokio"
 version = "1.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2169,17 +2197,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-serde"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc6b213177105856957181934e4920de57730fc69bf42c37ee5bb664d406d9e1"
+dependencies = [
+ "serde",
+ "tracing-core",
+]
+
+[[package]]
 name = "tracing-subscriber"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad0f048c97dbd9faa9b7df56362b8ebcaa52adb06b498c050d2f4e32f90a7a8b"
 dependencies = [
  "nu-ansi-term",
+ "serde",
+ "serde_json",
  "sharded-slab",
  "smallvec",
  "thread_local",
  "tracing-core",
  "tracing-log",
+ "tracing-serde",
 ]
 
 [[package]]
@@ -2274,11 +2315,14 @@ dependencies = [
  "poem",
  "poem-openapi",
  "prometheus-client",
+ "regex",
  "serde",
  "serde_repr",
+ "sql-builder",
  "strum",
  "strum_macros",
  "time",
+ "tracing",
 ]
 
 [[package]]
